@@ -1,169 +1,195 @@
-# 🌾 KRISHI.AI: An Explainable AI Framework for Precision Crop Recommendation
+# 🌾 KRISHI.AI: Explainable Crop Recommendation System
 
-KRISHI.AI is an intelligent crop recommendation system that leverages machine learning and explainable AI techniques to suggest the most suitable crops based on soil nutrients and environmental conditions. The system is designed to provide not only accurate predictions but also interpretable insights, enabling users to understand the reasoning behind each recommendation.
-
----
-
-## 📌 Table of Contents
-
-- Introduction
-- Problem Statement
-- Proposed Solution
-- Objectives
-- System Overview
-- Dataset Description
-- Methodology
-- Machine Learning Model
-- Explainable AI (SHAP)
-- Results and Performance
-- Project Structure
-- Installation and Setup
-- Usage Instructions
-- Example Output
-- Applications
-- Limitations
-- Future Scope
-- Contributors
+KRISHI.AI is a machine learning-based system that recommends the most suitable crop based on soil nutrients and environmental conditions. The system also uses Explainable AI (SHAP) to provide insights into why a particular crop is recommended.
 
 ---
 
-## 🌍 Introduction
+## 📌 Introduction
 
-Agriculture plays a vital role in sustaining human life and economic stability, especially in countries like India. The productivity of crops is highly dependent on multiple factors such as soil composition, climate conditions, and water availability. Selecting the appropriate crop for a given set of conditions is a complex decision that directly impacts yield and profitability.
+Agriculture productivity depends on several factors such as soil nutrients, climate, and water availability. Selecting the right crop is essential for maximizing yield. Traditional methods rely on experience and may not always provide optimal results.
 
-With the advancement of artificial intelligence, machine learning-based systems have been introduced to support crop selection. However, most existing solutions focus only on prediction accuracy and lack interpretability, making it difficult for users to trust and understand the recommendations.
+KRISHI.AI provides a data-driven solution using machine learning to assist in crop selection, along with explanation support to improve transparency and trust.
 
 ---
 
 ## ❗ Problem Statement
 
-Traditional crop selection methods face several challenges:
-
-- Lack of data-driven decision-making
-- Poor accessibility to expert agricultural advice
-- Inability to handle complex environmental interactions
-- Lack of transparency in AI-based systems
-
-Most machine learning models act as "black boxes," providing predictions without explaining the reasoning behind them. This reduces trust among users, especially farmers and non-technical stakeholders.
+- Lack of data-driven crop recommendation systems  
+- Limited access to expert agricultural advice  
+- Difficulty in understanding AI-based predictions  
+- Existing systems act as black boxes  
 
 ---
 
 ## 💡 Proposed Solution
 
-KRISHI.AI addresses these challenges by:
+This project uses:
+- LightGBM for crop prediction  
+- SHAP for explainability  
+- Streamlit for user interaction  
 
-- Using machine learning (LightGBM) for accurate crop prediction
-- Incorporating explainable AI (SHAP) to interpret model decisions
-- Providing a user-friendly interface using Streamlit
-- Enabling real-time prediction based on user inputs
+The system predicts crops based on input parameters and explains the reasoning behind predictions.
 
 ---
 
 ## 🎯 Objectives
 
-- To develop a machine learning model for crop recommendation
-- To achieve high predictive accuracy using ensemble methods
-- To enhance interpretability using SHAP
-- To build an interactive system accessible to users
+- Build a crop recommendation model  
+- Achieve high prediction accuracy  
+- Provide interpretable results using SHAP  
+- Develop an interactive application  
 
 ---
 
 ## ⚙️ System Overview
 
-The system takes the following inputs:
+Inputs:
+- Nitrogen (N)  
+- Phosphorus (P)  
+- Potassium (K)  
+- Temperature  
+- Humidity  
+- pH  
+- Rainfall  
 
-- Nitrogen (N)
-- Phosphorus (P)
-- Potassium (K)
-- Temperature
-- Humidity
-- Soil pH
-- Rainfall
-
-Based on these inputs, the system predicts the most suitable crop and explains the contributing factors.
+Output:
+- Recommended crop  
 
 ---
 
 ## 📊 Dataset Description
 
-The dataset used is a crop recommendation dataset containing multiple agronomic features.
+The dataset includes:
 
-| Feature      | Description                          |
-|-------------|--------------------------------------|
-| N           | Nitrogen content (kg/ha)             |
-| P           | Phosphorus content (kg/ha)           |
-| K           | Potassium content (kg/ha)            |
-| temperature | Temperature in Celsius               |
-| humidity    | Relative humidity (%)                |
-| ph          | Soil pH value                        |
-| rainfall    | Rainfall (mm)                        |
-| label       | Crop type                            |
+- N: Nitrogen content  
+- P: Phosphorus content  
+- K: Potassium content  
+- temperature: Temperature (°C)  
+- humidity: Humidity (%)  
+- ph: Soil pH  
+- rainfall: Rainfall (mm)  
+- label: Crop name  
 
 ---
 
 ## 🔬 Methodology
 
-The overall workflow of the system includes:
-
-1. Data Collection and Loading
-2. Data Preprocessing
-3. Feature Selection
-4. Train-Test Split
-5. Model Training
-6. Model Evaluation
-7. Explainability Analysis
-8. Deployment
+1. Load dataset  
+2. Preprocess data  
+3. Split into train and test sets  
+4. Train LightGBM model  
+5. Evaluate model performance  
+6. Apply SHAP for explainability  
+7. Deploy using Streamlit  
 
 ---
 
-## 🧠 Machine Learning Model
+## 🧠 Model Used
 
-The system uses:
-
-### 🔹 LightGBM (Gradient Boosting)
-
-LightGBM is an efficient gradient boosting framework that:
-
-- Handles large datasets efficiently
-- Captures nonlinear relationships
-- Provides high accuracy
-- Works well with structured data
+LightGBM (Gradient Boosting):
+- High accuracy  
+- Fast training  
+- Handles nonlinear relationships  
 
 ---
 
-## 🔍 Explainable AI (SHAP)
+## 🔍 Explainable AI
 
-To make predictions interpretable, SHAP (SHapley Additive Explanations) is used.
+SHAP is used to:
+- Show feature importance  
+- Explain model predictions  
+- Improve trust in results  
 
-### SHAP provides:
-
-- Feature importance
-- Contribution of each input feature
-- Visualization of decision-making
-
-### Example Insights:
-
-- High rainfall → Rice recommendation
-- High potassium → Banana suitability
-- Low rainfall → Chickpea preference
+Example:
+- High rainfall → Rice  
+- High potassium → Banana  
 
 ---
 
-## 📈 Results and Performance
+## 📈 Results
 
-- Accuracy: **~98–99%**
-- Model: LightGBM
-- Evaluation Metrics:
-  - Accuracy
-  - Precision
-  - Recall
-  - F1-score
-
-The model performs better than traditional algorithms like:
-- Random Forest
-- SVM
-- KNN
+- Accuracy: ~98–99%  
+- Better than traditional models (SVM, KNN, Random Forest)  
 
 ---
 
-## 📂 Project Structure
+## ⚙️ Installation and Setup
+
+Step 1: Clone the repository
+
+git clone https://github.com/Bhxvyx05/KRISHI.AI-Crop-Recommendation.git  
+cd KRISHI.AI-Crop-Recommendation  
+
+Step 2: Create virtual environment
+
+python -m venv venv  
+
+Step 3: Activate environment
+
+venv\Scripts\activate  
+
+Step 4: Install dependencies
+
+pip install -r requirements.txt  
+
+---
+
+## ▶️ Usage
+
+Run the Streamlit application:
+
+streamlit run app.py  
+
+Then open in browser:
+
+http://localhost:8501  
+
+---
+
+## 💡 Example
+
+Input:
+N = 90  
+P = 42  
+K = 43  
+temperature = 20  
+humidity = 82  
+ph = 6.5  
+rainfall = 202  
+
+Output:
+Recommended Crop: Rice  
+
+---
+
+## 🌍 Applications
+
+- Precision agriculture  
+- Smart farming  
+- Agricultural advisory systems  
+- Educational projects  
+
+---
+
+## ⚠️ Limitations
+
+- Depends on dataset quality  
+- No real-time weather integration  
+- Limited regional adaptability  
+
+---
+
+## 🚀 Future Scope
+
+- Mobile application  
+- IoT integration  
+- Region-specific recommendations  
+- Multi-language support  
+
+---
+
+## ⭐ Conclusion
+
+KRISHI.AI combines machine learning with explainable AI to provide accurate and interpretable crop recommendations. It helps bridge the gap between prediction and understanding in agricultural decision-making.
+
+---
