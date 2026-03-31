@@ -113,36 +113,31 @@ Example:
 
 ---
 
-## ⚙️ Installation and Setup
+⚙️ Installation and Setup
 
-Step 1: Clone the repository
+Follow these steps to set up the project locally:
 
-git clone https://github.com/Bhxvyx05/KRISHI.AI-Crop-Recommendation.git  
-cd KRISHI.AI-Crop-Recommendation  
+1️⃣ Clone the Repository
+git clone https://github.com/Bhxvyx05/KRISHI.AI-Crop-Recommendation.git
+cd KRISHI.AI-Crop-Recommendation
+2️⃣ Create a Virtual Environment
+python -m venv venv
+3️⃣ Activate the Virtual Environment
 
-Step 2: Create virtual environment
+For Windows:
 
-python -m venv venv  
+venv\Scripts\activate
 
-Step 3: Activate environment
+For macOS/Linux:
 
-venv\Scripts\activate  
-
-Step 4: Install dependencies
-
-pip install -r requirements.txt  
-
----
-
-## ▶️ Usage
+source venv/bin/activate
+4️⃣ Install Dependencies
+pip install -r requirements.txt
+▶️ Usage
 
 Run the Streamlit application:
 
-streamlit run app.py  
-
-Then open in browser:
-
-http://localhost:8501  
+streamlit run app.py
 
 ---
 
