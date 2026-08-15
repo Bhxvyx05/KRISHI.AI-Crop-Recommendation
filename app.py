@@ -12,192 +12,645 @@ from sklearn.metrics import accuracy_score
 import shap
 import matplotlib.pyplot as plt
 
-# --- 1. Caching for Performance ---
+
+# ============================================================
+# 1. PAGE CONFIGURATION
+# ============================================================
+
+st.set_page_config(
+    page_title="KRISHI.AI - Crop Recommendation",
+    page_icon="🌾",
+    layout="wide",
+    initial_sidebar_state="expanded"
+)
+
+
+# ============================================================
+# 2. LOAD DATA
+# ============================================================
+
 @st.cache_data
 def load_data():
-    """Loads the crop recommendation dataset."""
+    """Load the crop recommendation dataset."""
+
     try:
-        df = pd.read_csv('Crop_recommendation.csv')
+        df = pd.read_csv("Crop_recommendation.csv")
         return df
+
     except FileNotFoundError:
-        st.error("Error: 'Crop_recommendation.csv' not found. Please make sure the dataset is in the same directory as 'app.py'.")
+        st.error(
+            "❌ Crop_recommendation.csv was not found. "
+            "Please keep the CSV file in the same folder as app.py."
+        )
         return None
+
+
+# ============================================================
+# 3. TRAIN AND EVALUATE MODELS
+# ============================================================
 
 @st.cache_resource
 def train_and_evaluate_models(df):
-    """Prepares data, trains multiple models, identifies the best one, and returns it along with performance stats."""
-    if df is None:
-        return None, None, None, None, None
+    """
+    Prepare data, train multiple ML models,
+    compare their performance, and return the best model.
+    """
 
-    X = df.drop('label', axis=1)
-    y = df['label']
-    
+    X = df.drop("label", axis=1)
+    y = df["label"]
+
+    # Encode target labels
     le = LabelEncoder()
     y_encoded = le.fit_transform(y)
-    
-    X_train, X_test, y_train, y_test = train_test_split(X, y_encoded, test_size=0.2, random_state=42, stratify=y_encoded)
-    
+
+    # Train-test split
+    X_train, X_test, y_train, y_test = train_test_split(
+        X,
+        y_encoded,
+        test_size=0.20,
+        random_state=42,
+        stratify=y_encoded
+    )
+
+    # Models
     models = {
         "Decision Tree": DecisionTreeClassifier(random_state=42),
         "Naive Bayes": GaussianNB(),
         "KNN": KNeighborsClassifier(),
         "Random Forest": RandomForestClassifier(random_state=42),
-        "LightGBM": lgb.LGBMClassifier(random_state=42, verbosity=-1)
+        "LightGBM": lgb.LGBMClassifier(
+            random_state=42,
+            verbosity=-1
+        )
     }
-    
+
     performance_data = []
-    best_model_obj = None
-    best_accuracy = 0.0
     trained_models = {}
 
+    best_model = None
+    best_accuracy = -1
+
+    # Train and evaluate
     for name, model in models.items():
+
         model.fit(X_train, y_train)
+
         y_pred = model.predict(X_test)
+
         accuracy = accuracy_score(y_test, y_pred)
-        performance_data.append({"Model": name, "Accuracy": accuracy})
+
+        performance_data.append({
+            "Model": name,
+            "Accuracy": accuracy
+        })
+
         trained_models[name] = model
-        
+
         if accuracy > best_accuracy:
             best_accuracy = accuracy
-            best_model_obj = model
-            
-    performance_df = pd.DataFrame(performance_data).sort_values(by="Accuracy", ascending=False).reset_index(drop=True)
-    
-    return best_model_obj, X, le, performance_df, trained_models, X_train
+            best_model = model
 
-# --- 2. App Setup ---
-st.set_page_config(page_title="Crop Recommendation App", layout="wide", initial_sidebar_state="expanded")
-
-# --- Load Data and Train Models ---
-df = load_data()
-
-if df is not None:
-    best_model, X, le, performance_df, trained_models, X_train_data = train_and_evaluate_models(df)
-
-    # --- App Title and Description ---
-    st.title("🌾 Crop Recommendation & Analysis Dashboard")
-    st.write(
-        "This app uses a Machine Learning model to recommend the best crop for your farm. "
-        "Adjust the sliders in the sidebar to match your conditions, and the app will predict the optimal crop, "
-        "explain its reasoning, and suggest alternatives."
+    performance_df = (
+        pd.DataFrame(performance_data)
+        .sort_values(
+            by="Accuracy",
+            ascending=False
+        )
+        .reset_index(drop=True)
     )
 
-    # --- Sidebar for User Input ---
-    st.sidebar.header("Enter Your Farm's Conditions:")
-    def user_input_features():
-        N = st.sidebar.slider('Nitrogen (N) Content (kg/ha)', int(df['N'].min()), int(df['N'].max()), 90)
-        P = st.sidebar.slider('Phosphorus (P) Content (kg/ha)', int(df['P'].min()), int(df['P'].max()), 42)
-        K = st.sidebar.slider('Potassium (K) Content (kg/ha)', int(df['K'].min()), int(df['K'].max()), 43)
-        temperature = st.sidebar.slider('Temperature (°C)', 8.0, 44.0, 20.8, 0.1)
-        humidity = st.sidebar.slider('Relative Humidity (%)', 14.0, 100.0, 82.0, 0.1)
-        ph = st.sidebar.slider('Soil pH Value', 3.5, 9.9, 6.5, 0.1)
-        rainfall = st.sidebar.slider('Rainfall (mm)', 20.0, 299.0, 202.9, 0.1)
-        data = {'N': N, 'P': P, 'K': K, 'temperature': temperature, 'humidity': humidity, 'ph': ph, 'rainfall': rainfall}
-        return pd.DataFrame(data, index=[0])
+    return (
+        best_model,
+        X,
+        le,
+        performance_df,
+        trained_models,
+        X_train
+    )
 
-    input_df = user_input_features()
 
-    # --- Main Panel ---
+# ============================================================
+# 4. LOAD DATA AND TRAIN MODELS
+# ============================================================
+
+df = load_data()
+
+
+if df is not None:
+
+    (
+        best_model,
+        X,
+        le,
+        performance_df,
+        trained_models,
+        X_train_data
+    ) = train_and_evaluate_models(df)
+
+
+    # ========================================================
+    # 5. APPLICATION HEADER
+    # ========================================================
+
+    st.title("🌾 KRISHI.AI")
+    st.subheader("AI-Powered Crop Recommendation & Analysis")
+
+    st.write(
+        "KRISHI.AI uses machine learning to recommend the most suitable "
+        "crop based on soil and environmental conditions."
+    )
+
+
+    # ========================================================
+    # 6. SIDEBAR USER INPUT
+    # ========================================================
+
+    st.sidebar.header("🌱 Enter Farm Conditions")
+
+    N = st.sidebar.slider(
+        "Nitrogen (N) Content (kg/ha)",
+        int(df["N"].min()),
+        int(df["N"].max()),
+        int(df["N"].median())
+    )
+
+    P = st.sidebar.slider(
+        "Phosphorus (P) Content (kg/ha)",
+        int(df["P"].min()),
+        int(df["P"].max()),
+        int(df["P"].median())
+    )
+
+    K = st.sidebar.slider(
+        "Potassium (K) Content (kg/ha)",
+        int(df["K"].min()),
+        int(df["K"].max()),
+        int(df["K"].median())
+    )
+
+    temperature = st.sidebar.slider(
+        "Temperature (°C)",
+        float(df["temperature"].min()),
+        float(df["temperature"].max()),
+        float(df["temperature"].median()),
+        0.1
+    )
+
+    humidity = st.sidebar.slider(
+        "Relative Humidity (%)",
+        float(df["humidity"].min()),
+        float(df["humidity"].max()),
+        float(df["humidity"].median()),
+        0.1
+    )
+
+    ph = st.sidebar.slider(
+        "Soil pH Value",
+        float(df["ph"].min()),
+        float(df["ph"].max()),
+        float(df["ph"].median()),
+        0.1
+    )
+
+    rainfall = st.sidebar.slider(
+        "Rainfall (mm)",
+        float(df["rainfall"].min()),
+        float(df["rainfall"].max()),
+        float(df["rainfall"].median()),
+        0.1
+    )
+
+
+    # Create model input
+    input_df = pd.DataFrame({
+        "N": [N],
+        "P": [P],
+        "K": [K],
+        "temperature": [temperature],
+        "humidity": [humidity],
+        "ph": [ph],
+        "rainfall": [rainfall]
+    })
+
+
+    # ========================================================
+    # 7. MAIN DASHBOARD
+    # ========================================================
+
     col1, col2 = st.columns([2, 1.3])
 
+
+    # ========================================================
+    # COLUMN 1 - PREDICTION + SHAP
+    # ========================================================
+
     with col1:
-        # --- 3. Prediction and Explanation ---
+
         st.header("📈 Prediction & Explanation")
-        
+
+        # Prediction
         prediction_encoded = best_model.predict(input_df)
-        prediction = le.inverse_transform(prediction_encoded)[0]
+
+        prediction = le.inverse_transform(
+            prediction_encoded.astype(int)
+        )[0]
+
+        # Prediction probability
         prediction_proba = best_model.predict_proba(input_df)
+
         confidence = np.max(prediction_proba) * 100
-        
-        st.success(f"**Recommended Crop:** `{prediction.capitalize()}` (Confidence: {confidence:.2f}%)")
 
-        st.subheader("Why this crop? (Explainable AI)")
-        st.write("This plot shows feature contributions. **Red features** increase the likelihood of the prediction, while **blue features** decrease it.")
-
-        # ###########################################################################
-        # # FINAL CORRECTED SHAP PLOTTING LOGIC
-        # ###########################################################################
-        
-        # Use the Explainer API with the LightGBM model
-        explainer = shap.Explainer(trained_models["LightGBM"], X_train_data)
-        
-        # Calculate SHAP values for the user's single input
-        shap_values_object = explainer(input_df)
-
-        # Get the index of the predicted class
-        class_index = list(best_model.classes_).index(prediction_encoded[0])
-        
-        # Let SHAP create its own plot, then we'll capture it.
-        # We don't create fig, ax beforehand.
-        shap.force_plot(
-            base_value=shap_values_object.base_values[0, class_index],
-            shap_values=shap_values_object.values[0, :, class_index],
-            features=input_df,
-            matplotlib=True,
-            show=False,
-            figsize=(10, 3)  # Adjusting size for better display
+        st.success(
+            f"🌾 **Recommended Crop:** "
+            f"`{prediction.capitalize()}`  \n"
+            f"**Confidence:** {confidence:.2f}%"
         )
-        
-        # Use plt.gcf() to get the current figure that SHAP created
-        st.pyplot(plt.gcf(), bbox_inches='tight')
-        plt.clf() # Clear the figure to prevent it from being displayed on the next run
-        # ###########################################################################
+
+
+        # ====================================================
+        # SHAP EXPLANATION
+        # ====================================================
+
+        st.subheader("🔍 Why this crop? — Explainable AI")
+
+        st.write(
+            "The SHAP explanation shows how each feature contributes "
+            "to the prediction."
+        )
+
+        try:
+
+            # Use the LightGBM model specifically for SHAP
+            lightgbm_model = trained_models["LightGBM"]
+
+            explainer = shap.TreeExplainer(
+                lightgbm_model
+            )
+
+            shap_values = explainer.shap_values(
+                input_df
+            )
+
+            # Handle multiclass SHAP output
+            if isinstance(shap_values, list):
+
+                class_index = int(
+                    prediction_encoded[0]
+                )
+
+                shap_values_for_class = shap_values[
+                    class_index
+                ]
+
+            else:
+
+                # Newer SHAP versions can return
+                # a 3D array for multiclass models
+                if len(shap_values.shape) == 3:
+
+                    class_index = int(
+                        prediction_encoded[0]
+                    )
+
+                    shap_values_for_class = shap_values[
+                        0, :, class_index
+                    ]
+
+                else:
+
+                    shap_values_for_class = shap_values[
+                        0
+                    ]
+
+            # Create SHAP bar plot
+            fig, ax = plt.subplots(
+                figsize=(10, 4)
+            )
+
+            feature_importance = pd.Series(
+                np.abs(shap_values_for_class),
+                index=input_df.columns
+            ).sort_values()
+
+            feature_importance.plot(
+                kind="barh",
+                ax=ax
+            )
+
+            ax.set_title(
+                "Feature Contribution to Prediction"
+            )
+
+            ax.set_xlabel(
+                "Absolute SHAP Value"
+            )
+
+            plt.tight_layout()
+
+            st.pyplot(
+                fig,
+                use_container_width=True
+            )
+
+            plt.close(fig)
+
+        except Exception as e:
+
+            st.warning(
+                f"SHAP explanation could not be generated: {e}"
+            )
+
+
+    # ========================================================
+    # COLUMN 2 - MODEL PERFORMANCE
+    # ========================================================
 
     with col2:
-        # --- 4. Model Performance Comparison ---
-        st.header("🏆 Model Performance Comparison")
-        st.write("The app uses the model with the highest accuracy for predictions.")
-        
+
+        st.header("🏆 Model Performance")
+
+        st.write(
+            "The model with the highest test accuracy "
+            "is selected for crop prediction."
+        )
+
         def highlight_max(s):
+
             is_max = s == s.max()
-            return ['background-color: #4CAF50; color: white' if v else '' for v in is_max]
-        
-        st.dataframe(performance_df.style.apply(highlight_max, subset=['Accuracy']).format({'Accuracy': '{:.2%}'}), use_container_width=True)
 
-    # --- 5. Counterfactual Analysis ---
-    st.header("🤔 'What-If' Scenarios (Counterfactuals)")
-    st.write("Discover what other crops might be viable if your farm's conditions were to change. Predictions below are based on the best-performing model.")
+            return [
+                "background-color: #4CAF50; color: white"
+                if value
+                else ""
+                for value in is_max
+            ]
 
-    def generate_counterfactuals(input_sample, model, le, feature_to_vary, value_range):
-        original_prediction = le.inverse_transform(model.predict(input_sample))[0]
+        styled_performance = (
+            performance_df.style
+            .apply(
+                highlight_max,
+                subset=["Accuracy"]
+            )
+            .format({
+                "Accuracy": "{:.2%}"
+            })
+        )
+
+        st.dataframe(
+            styled_performance,
+            use_container_width=True
+        )
+
+        # Best model
+        best_model_name = performance_df.iloc[0]["Model"]
+
+        st.info(
+            f"🥇 **Best Performing Model:** "
+            f"{best_model_name}"
+        )
+
+
+    # ========================================================
+    # 8. COUNTERFACTUAL ANALYSIS
+    # ========================================================
+
+    st.header("🤔 What-If Scenarios")
+
+    st.write(
+        "Explore how changing individual farm conditions "
+        "can influence the recommended crop."
+    )
+
+
+    def generate_counterfactuals(
+        input_sample,
+        model,
+        le,
+        feature_to_vary,
+        value_range
+    ):
+        """
+        Change one feature at a time and observe
+        whether the predicted crop changes.
+
+        A float copy is used to avoid pandas dtype
+        errors when testing decimal counterfactual values.
+        """
+
+        # IMPORTANT:
+        # Convert temporary dataframe to float so that
+        # np.linspace decimal values can be assigned safely.
+        base_sample = input_sample.copy().astype(float)
+
+        original_prediction_encoded = model.predict(
+            base_sample
+        )
+
+        original_prediction = le.inverse_transform(
+            original_prediction_encoded.astype(int)
+        )[0]
+
         alternatives = {}
+
         for value in value_range:
-            temp_sample = input_sample.copy()
-            temp_sample[feature_to_vary] = value
-            new_prediction_encoded = model.predict(temp_sample)
-            new_prediction = le.inverse_transform(new_prediction_encoded)[0]
-            if new_prediction != original_prediction and new_prediction not in alternatives:
-                change_direction = "increase" if value > input_sample[feature_to_vary].iloc[0] else "decrease"
-                alternatives[new_prediction] = (value, change_direction)
+
+            temp_sample = base_sample.copy()
+
+            # Safe assignment
+            temp_sample.loc[
+                temp_sample.index[0],
+                feature_to_vary
+            ] = float(value)
+
+            new_prediction_encoded = model.predict(
+                temp_sample
+            )
+
+            new_prediction = le.inverse_transform(
+                new_prediction_encoded.astype(int)
+            )[0]
+
+            if (
+                new_prediction != original_prediction
+                and new_prediction not in alternatives
+            ):
+
+                original_value = float(
+                    input_sample[
+                        feature_to_vary
+                    ].iloc[0]
+                )
+
+                if value > original_value:
+                    change_direction = "increase"
+                else:
+                    change_direction = "decrease"
+
+                alternatives[new_prediction] = (
+                    value,
+                    change_direction
+                )
+
         return alternatives
 
+
+    # ========================================================
+    # COUNTERFACTUAL COLUMNS
+    # ========================================================
+
     cols = st.columns(3)
+
+
+    # ========================================================
+    # RAINFALL
+    # ========================================================
+
     with cols[0]:
-        st.info("**💧 If Rainfall Changes...**")
-        rain_range = np.linspace(df['rainfall'].min(), df['rainfall'].max(), 30)
-        rain_counterfactuals = generate_counterfactuals(input_df, best_model, le, 'rainfall', rain_range)
+
+        st.info(
+            "💧 **If Rainfall Changes...**"
+        )
+
+        rain_range = np.linspace(
+            df["rainfall"].min(),
+            df["rainfall"].max(),
+            30
+        )
+
+        rain_counterfactuals = generate_counterfactuals(
+            input_df,
+            best_model,
+            le,
+            "rainfall",
+            rain_range
+        )
+
         if rain_counterfactuals:
-            for crop, (value, direction) in rain_counterfactuals.items():
-                st.write(f"➡️ If rainfall were to **{direction}** to **{value:.0f} mm**, consider **{crop.capitalize()}**.")
+
+            for crop, (
+                value,
+                direction
+            ) in rain_counterfactuals.items():
+
+                st.write(
+                    f"➡️ If rainfall were to "
+                    f"**{direction}** to "
+                    f"**{value:.0f} mm**, "
+                    f"consider **{crop.capitalize()}**."
+                )
+
         else:
-            st.write("No simple alternatives found.")
+
+            st.write(
+                "No simple alternatives found."
+            )
+
+
+    # ========================================================
+    # POTASSIUM
+    # ========================================================
 
     with cols[1]:
-        st.warning("**🌿 If Potassium (K) Changes...**")
-        k_range = np.linspace(df['K'].min(), df['K'].max(), 30)
-        k_counterfactuals = generate_counterfactuals(input_df, best_model, le, 'K', k_range)
+
+        st.warning(
+            "🌿 **If Potassium (K) Changes...**"
+        )
+
+        k_range = np.linspace(
+            df["K"].min(),
+            df["K"].max(),
+            30
+        )
+
+        k_counterfactuals = generate_counterfactuals(
+            input_df,
+            best_model,
+            le,
+            "K",
+            k_range
+        )
+
         if k_counterfactuals:
-            for crop, (value, direction) in k_counterfactuals.items():
-                st.write(f"➡️ If Potassium were to **{direction}** to **{value:.0f} kg/ha**, consider **{crop.capitalize()}**.")
+
+            for crop, (
+                value,
+                direction
+            ) in k_counterfactuals.items():
+
+                st.write(
+                    f"➡️ If Potassium were to "
+                    f"**{direction}** to "
+                    f"**{value:.0f} kg/ha**, "
+                    f"consider **{crop.capitalize()}**."
+                )
+
         else:
-            st.write("No alternatives found.")
+
+            st.write(
+                "No alternatives found."
+            )
+
+
+    # ========================================================
+    # NITROGEN
+    # ========================================================
 
     with cols[2]:
-        st.error("**🌱 If Nitrogen (N) Changes...**")
-        n_range = np.linspace(df['N'].min(), df['N'].max(), 30)
-        n_counterfactuals = generate_counterfactuals(input_df, best_model, le, 'N', n_range)
+
+        st.error(
+            "🌱 **If Nitrogen (N) Changes...**"
+        )
+
+        n_range = np.linspace(
+            df["N"].min(),
+            df["N"].max(),
+            30
+        )
+
+        n_counterfactuals = generate_counterfactuals(
+            input_df,
+            best_model,
+            le,
+            "N",
+            n_range
+        )
+
         if n_counterfactuals:
-            for crop, (value, direction) in n_counterfactuals.items():
-                st.write(f"➡️ If Nitrogen were to **{direction}** to **{value:.0f} kg/ha**, consider **{crop.capitalize()}**.")
+
+            for crop, (
+                value,
+                direction
+            ) in n_counterfactuals.items():
+
+                st.write(
+                    f"➡️ If Nitrogen were to "
+                    f"**{direction}** to "
+                    f"**{value:.0f} kg/ha**, "
+                    f"consider **{crop.capitalize()}**."
+                )
+
         else:
-            st.write("No alternatives found.")
+
+            st.write(
+                "No alternatives found."
+            )
+
+
+    # ========================================================
+    # 9. CURRENT INPUT SUMMARY
+    # ========================================================
+
+    st.header("📋 Current Farm Conditions")
+
+    st.dataframe(
+        input_df,
+        use_container_width=True,
+        hide_index=True
+    )
+
+else:
+
+    st.warning(
+        "Please make sure Crop_recommendation.csv "
+        "is present in the project directory."
+    )
